@@ -103,3 +103,5 @@ test('snippets are identical apart from the copy, and carry no page-wide code', 
   assert.doesNotMatch(p, /<style|<link|<iframe/);
   assert.equal(p.match(/<script/g).length, 1);
 });
+test('a film is never revealed on a timer, only when it plays', () =>
+  assert.doesNotMatch(read('../preview/site.js'), /setTimeout\(on/));

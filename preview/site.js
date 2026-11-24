@@ -37,7 +37,6 @@ function playFilms(root) {
     const on = () => frame.classList.add('on');
     frame.addEventListener('load', () => {
       frame.contentWindow?.postMessage('{"method":"addEventListener","value":"playProgress"}', VIMEO);
-      setTimeout(on, 4000);
     });
     frame.reveal = on;
   }), { rootMargin: '25% 0px' });
