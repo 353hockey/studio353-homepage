@@ -9,7 +9,7 @@ import { sections } from '../preview/projects.js';
 const at = p => fileURLToPath(new URL(p, import.meta.url));
 const read = p => readFileSync(at(p), 'utf8');
 const readFolder = dir => Object.fromEntries(readdirSync(dir).map(f => [f, readFileSync(`${dir}/${f}`, 'utf8')]));
-const project = over => ({ title: 'A', client: '', year: 2026, vimeo: '1', vertical: false, href: 'https://x.y/', ...over });
+const project = over => ({ title: 'A', client: '', year: 2026, still: '1-a', vertical: false, href: 'https://x.y/', ...over });
 const SEAL = ':host{contain: layout paint}';
 
 test('guard rejects navigation-affecting code', () => {
@@ -79,15 +79,22 @@ test('pageFor falls back to the landing page for unknown addresses', () => {
   assert.equal(pageFor('#sports', list), 'sports');
   for (const h of ['', '#', '#nope', '#constructor']) assert.equal(pageFor(h, list), 'landing');
 });
-test('no still images anywhere', () => {
-  for (const id of ['landing', ...sections.map(s => s.id)]) assert.doesNotMatch(pageHTML(sections, id), /<img|poster=/);
-  assert.doesNotMatch(read('../preview/site.css'), /url\(/);
+test('landing is video only', () => assert.doesNotMatch(pageHTML(sections, 'landing'), /<img|poster=/));
+test('work pages are images only, loaded as needed at the right size', () => {
+  const html = pageHTML(sections, 'sports');
+  assert.doesNotMatch(html, /data-vimeo|<iframe/);
+  const imgs = html.match(/<img\b[^>]*>/g);
+  assert.equal(imgs.length, 11);
+  for (const img of imgs) for (const part of ['loading="lazy"', 'decoding="async"', 'alt=""', 'srcset="', 'sizes="', 'https://i.vimeocdn.com/video/'])
+    assert.ok(img.includes(part), part);
 });
-test('sports has the 11 current projects, each with a film and a link', () => {
+test('a project without an image shows a blue frame, not a broken image', () =>
+  assert.doesNotMatch(tileHTML(project({ still: '' })), /<img/));
+test('sports has the 11 current projects, each with an image and a link', () => {
   const sports = sections.find(s => s.id === 'sports').projects;
   assert.equal(sports.length, 11);
-  for (const p of sports) { assert.match(p.vimeo, /^\d+$/); assert.match(p.href, /^https:\/\//); }
-  assert.equal(new Set(sports.map(p => p.vimeo)).size, 11);
+  for (const p of sports) { assert.match(p.still, /^\d+-[0-9a-f]{64}$/); assert.match(p.href, /^https:\/\//); }
+  assert.equal(new Set(sports.map(p => p.still)).size, 11);
 });
 for (const [why, css, list] of [['the stylesheet fails', async () => { throw new Error('offline'); }, undefined],
                                 ['building the page fails', async () => '', [{ id: 'x' }, null]]])

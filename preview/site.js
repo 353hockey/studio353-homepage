@@ -5,9 +5,21 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
 const ratio = p => (p.vertical ? 9 / 16 : 16 / 9);
 const filmHTML = p => `<span class="film" style="--r:${ratio(p)}"${p.vimeo ? ` data-vimeo="${esc(p.vimeo)}"` : ''}></span>`;
 
+// Image widths on screen, matching the grid in site.css.
+const SIZES = {
+  large: '(max-width: 767px) 92vw, 46vw',
+  wide: '(max-width: 767px) 92vw, 30vw',
+  tall: '(max-width: 767px) 45vw, (max-width: 1000px) 30vw, 15vw',
+};
+function stillHTML(p, shape) {
+  if (!p.still) return '';
+  const url = w => `https://i.vimeocdn.com/video/${esc(p.still)}-d_${w}`;
+  return `<img alt="" loading="lazy" decoding="async" src="${url(640)}" srcset="${[320, 640, 960, 1280].map(w => `${url(w)} ${w}w`).join(', ')}" sizes="${SIZES[shape]}">`;
+}
+
 export function tileHTML(p) {
   const shape = p.vertical ? 'tall' : p.large ? 'large' : 'wide';
-  const body = `<span class="frame" style="--r:${ratio(p)}">${filmHTML(p)}</span><h2>${esc(p.title)}</h2><p>${[p.client, p.year].filter(Boolean).map(esc).join(', ')}</p>`;
+  const body = `<span class="frame" style="--r:${ratio(p)}">${stillHTML(p, shape)}</span><h2>${esc(p.title)}</h2><p>${[p.client, p.year].filter(Boolean).map(esc).join(', ')}</p>`;
   return `<li class="${shape}">${/^https:\/\//.test(p.href) ? `<a href="${esc(p.href)}" target="_blank" rel="noopener">${body}</a>` : body}</li>`;
 }
 
@@ -24,7 +36,7 @@ export function pageHTML(list, id) {
       : `<p class="none">${esc(section.name)} projects are on the way.</p>`}</div>`;
 }
 
-// Films load near the screen and unload when they leave. Blue shows until one is really playing.
+// Landing films load near the screen and unload when they leave. Blue shows until one is really playing.
 const VIMEO = 'https://player.vimeo.com';
 function playFilms(root) {
   const films = root.querySelectorAll('.film[data-vimeo]');
