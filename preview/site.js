@@ -33,7 +33,7 @@ async function loadSiteCSS() {
 function pageHTML(css, list) {
   const film = list.find(p => p.vimeo);
   return `<style>${css}</style><main>
-    <h1>Placeholder: preview copy</h1>
+    <h1>Placeholder: preview copy 2</h1>
     ${film ? `<iframe title="${esc(film.title)}" allow="autoplay"
       src="https://player.vimeo.com/video/${esc(film.vimeo)}?background=1&autoplay=1&loop=1&muted=1&playsinline=1"></iframe>` : ''}
     <ul>${list.map(rowHTML).join('')}</ul></main>`;
