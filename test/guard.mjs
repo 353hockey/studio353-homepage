@@ -24,7 +24,7 @@ const JS = [
   [/<style>(?!\$\{css\})/, 'styles outside site.css'],
   [/section\s*\.\s*hidden|section\s*\.\s*(style|class|append|prepend|remove|inner|outer|set|insert|replace|query)/, 'changes the section'],
 ];
-const ALLOWED = [/const section = host\.closest\('section'\);/g, /typeof document\b/g, /document\.getElementById\('s353-portfolio'\)/g];
+const ALLOWED = [/const section = host\.closest\('section'\);/g, /typeof (document|location)\b/g, /document\.fonts\.add\(/g, /\blocation\.hash\b(?!\s*[-+*\/|&?%^<>]*=(?!=))/g, /document\.getElementById\('s353-portfolio'\)/g];
 
 export function violations(files) {
   const found = [];
