@@ -1,0 +1,4 @@
+#!/bin/sh
+# Nothing publishes unless both copies pass the navigation guard and the tests.
+cd "$(git rev-parse --show-toplevel)" || exit 1
+node test/guard.mjs preview && node test/guard.mjs live && node --test test/*.test.mjs > /dev/null || { echo 'Push stopped: checks failed.'; exit 1; }

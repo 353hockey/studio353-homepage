@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>Stand-in Squarespace page</title>
+<!-- Mimics studio353.com: header layered over the first section, a gutter grid around the block, hostile page styles. -->
+<style>
+  body { margin: 0; font-family: "EB Garamond", serif; color: #00f; background: #f9fbff; }
+  #header { position: absolute; top: 0; left: 0; right: 0; height: 141px; z-index: 10; display: flex; gap: 16px; align-items: center; padding: 0 24px; box-sizing: border-box; flex-wrap: wrap; }
+  section { position: relative; padding-top: 141px; }
+  .grid { display: grid; grid-template-columns: 4vw 1fr 4vw; }
+  .block { grid-column: 2; min-width: 0; }
+  h1 { color: red; font-size: 90px; } p { text-transform: uppercase; } iframe { height: 10px !important; }
+  footer { padding: 40px 24px; }
+</style>
+<header id="header"><a href="/">Home</a><a href="/about">About</a><a href="/hockey">353 Hockey</a><a href="/353connect">353 Connect</a><a href="/contact">Contact</a></header>
+<section><div class="grid"><div class="block">
+<div id="s353-portfolio"><h1 style="font-size:24px">Alexander Gibian directs, shoots, and edits for athletes, brands, and artists.</h1><ul><li><a href="https://www.instagram.com/reels/DYk-JjvhBCS/">Hutson × 3rd Round</a></li></ul></div>
+</div></div></section>
+<footer>© Studio 353</footer>
+<script type="module">
+  const q = new URLSearchParams(location.search);
+  if (q.has('nocss')) { const f = window.fetch; window.fetch = (u, o) => String(u).endsWith('site.css') ? Promise.reject(new Error('blocked')) : f(u, o); }
+  if (!q.has('nojs')) import(`../${q.get('copy') || 'preview'}/site.js`);
+</script>
+</html>
