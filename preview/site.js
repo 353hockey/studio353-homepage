@@ -61,6 +61,25 @@ function playFilms(root) {
   return () => { observer.disconnect(); removeEventListener('message', onMessage); };
 }
 
+// The project under the pointer is lit. Anything else, including leaving the page, returns all to normal.
+function lightUp(root) {
+  const grid = root.querySelector?.('.grid');
+  if (!grid) return () => {};
+  const items = [...grid.children];
+  const light = item => {
+    grid.classList.toggle('lit', Boolean(item));
+    items.forEach(i => i.classList.toggle('up', i === item));
+  };
+  const onMove = e => light(e.pointerType === 'mouse' ? items.find(i => e.composedPath().includes(i)) : null);
+  const onOut = e => { if (!e.relatedTarget) light(null); };
+  const off = () => light(null);
+  // A mouse click should not leave a keyboard outline behind. Enter (detail 0) keeps it.
+  grid.addEventListener('click', e => { if (e.detail) root.activeElement?.blur(); });
+  const events = [['pointermove', onMove], ['pointerover', onMove], ['pointerout', onOut], ['blur', off], ['pagehide', off]];
+  events.forEach(([name, fn]) => addEventListener(name, fn));
+  return () => events.forEach(([name, fn]) => removeEventListener(name, fn));
+}
+
 // Full width of the Squarespace section, and the landing page fills what is left below the menu.
 export function fit(host) {
   const section = host.closest('section');
@@ -94,7 +113,7 @@ export async function mount(host, loadCSS = loadSiteCSS, list = sections) {
   // Nothing inside can paint outside the container, even if page styles disagree.
   host.style.setProperty('contain', 'layout paint', 'important');
   const root = host.attachShadow({ mode: 'open' });
-  const draw = html => { root.innerHTML = `<style>${css}</style>${html}`; return playFilms(root); };
+  const draw = html => { root.innerHTML = `<style>${css}</style>${html}`; const ends = [playFilms(root), lightUp(root)]; return () => ends.forEach(end => end()); };
   let stop = draw(first), shown = current();
   fit(host);
   if (typeof location !== 'undefined') addEventListener('hashchange', () => {

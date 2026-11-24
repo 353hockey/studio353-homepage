@@ -129,3 +129,8 @@ test('snippets are identical apart from the copy, and carry no page-wide code', 
 });
 test('a film is never revealed on a timer, only when it plays', () =>
   assert.doesNotMatch(read('../preview/site.js'), /setTimeout\(on/));
+test('only the pointer can grey out the grid, never leftover focus after a click', () => {
+  const css = read('../preview/site.css');
+  assert.doesNotMatch(css, /:has\(/);
+  for (const rule of css.match(/[^{}]+\{[^{}]*\}/g)) if (/:focus/.test(rule)) assert.doesNotMatch(rule, /grayscale|opacity|transform|--lift/);
+});
