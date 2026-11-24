@@ -14,13 +14,19 @@ const SEAL = ':host{contain: layout paint}';
 
 test('guard rejects navigation-affecting code', () => {
   for (const css of ['a{position:fixed}', 'a{z-index:99}', 'a{color:red!important}', 'a{margin-top:-1px}',
-                     'a{top:-5px}', 'a{position: sticky}', 'a{transform:translateY(-9px)}', 'a{margin:-4px 0}', 'a{inset:-2px}'])
+                     'a{top:-5px}', 'a{position: sticky}', 'a{transform:translateY(-90px)}', 'a{margin:-4px 0}', 'a{inset:-2px}'])
     assert.equal(violations({ 'site.css': SEAL + css }).length, 1, css);
   for (const js of ['document.body.append(x)', 'document.head.append(x)', 'document.querySelector("header")',
                     'document.documentElement.style.x=1', 'location.href="/"', 'document.createElement("style")',
                     'host.getRootNode()', 'window.open("/")', 'const d = document;', 'host.ownerDocument.body', 'globalThis.x=1',
                     'location.hash = "x"', 'location.hash="x"', 'location.hash += "x"', 'document.fonts.clear()'])
     assert.ok(violations({ 'site.js': js }).length >= 1, js);
+});
+test('guard allows a small lift inside the container, but never moves the container', () => {
+  assert.deepEqual(violations({ 'site.css': SEAL + 'a{transform:translateY(-12px) scale(1.02)}' }), []);
+  for (const css of ['a{transform:translateY(-17px)}', 'a{transform:translateY(-12vh)}', 'a{transform:translateX(-12px)}', 'a{transform:translate(0,-12px)}',
+                     ':host{transform:translateY(-12px)}', ':host(:hover){transform:translateY(-12px)}', ':host{translate:0 4px}'])
+    assert.ok(violations({ 'site.css': SEAL + css }).length >= 1, css);
 });
 test('guard allows reading the address hash and adding our own font', () =>
   assert.deepEqual(violations({ 'site.js': "if (location.hash === '#a') document.fonts.add(f);" }), []));
@@ -52,13 +58,24 @@ test('tileHTML escapes text and omits empty parts', () => {
   assert.match(html, /<p>2026<\/p>/);
 });
 test('tileHTML opens https links in a new tab and refuses others', () => {
-  assert.match(tileHTML(project()), /<a href="https:\/\/x\.y\/" target="_blank" rel="noopener">/);
+  assert.match(tileHTML(project()), /<a class="card" href="https:\/\/x\.y\/" target="_blank" rel="noopener">/);
   assert.doesNotMatch(tileHTML(project({ href: 'javascript:alert(1)' })), /<a\b/);
 });
 test('tileHTML keeps each film in its own shape', () => {
   assert.match(tileHTML(project({ vertical: true })), /class="tall"[\s\S]*--r:0\.5625/);
   assert.match(tileHTML(project({ large: true })), /class="large"[\s\S]*--r:1\.7777/);
   assert.match(tileHTML(project()), /class="wide"[\s\S]*--r:1\.7777/);
+});
+test('the hover area is the list item and the moving card is inside it, linked or not', () => {
+  assert.match(tileHTML(project()), /^<li class="wide"><a class="card" /);
+  assert.match(tileHTML(project({ href: '' })), /^<li class="wide"><div class="card">/);
+});
+test('the hover effect is for real pointers only', () => {
+  const css = read('../preview/site.css');
+  const outside = css.replace(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\n\}/, '')
+    .replace(/@media \(prefers-reduced-motion: no-preference\) and \(hover: hover\) and \(pointer: fine\).*/, '');
+  assert.notEqual(outside, css);
+  assert.doesNotMatch(outside, /grayscale|translateY/);
 });
 test('landing has one column per section, so a third can be added', () => {
   const three = ['Sports', 'Music', 'Film'].map(name => ({ id: name.toLowerCase(), name, film: null, projects: [] }));

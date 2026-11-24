@@ -34,6 +34,13 @@ h1 { margin: 0; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.2; letter-sp
 h2 { margin: 10px 0 2px; font-size: 14px; line-height: 1.25; letter-spacing: .02em; text-transform: uppercase; }
 .tall h2 { font-size: 13px; }
 .grid p { margin: 0; font: italic 17px/1.25 var(--serif); }
+/* Hover, desktop only: the piece lifts, the rest go grey. The list item stays put, so the pointer never falls off it. */
+.card { display: block; --lift: none; }
+@media (hover: hover) and (pointer: fine) {
+  .card { transition: transform .5s cubic-bezier(.2, .8, .2, 1), filter .4s ease .08s, opacity .4s ease .08s; }
+  .grid:has(li:hover, .card:focus-visible) .card { filter: grayscale(1); opacity: .28; transition-delay: 0s; }
+  .grid:has(li:hover, .card:focus-visible) li:hover .card, .grid:has(li:hover, .card:focus-visible) .card:focus-visible { filter: none; opacity: 1; transform: var(--lift); }
+}
 .grid a:hover h2 { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
 @media (max-width: 1000px) { .tall { grid-column: span 2; } }
@@ -43,4 +50,5 @@ h2 { margin: 10px 0 2px; font-size: 14px; line-height: 1.25; letter-spacing: .02
   .tall { grid-column: span 3; }
   .grid { gap: 28px 12px; }
 }
-@media (prefers-reduced-motion: reduce) { .film iframe, .film::after { transition: none; } }
+@media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) { .card { --lift: translateY(-12px) scale(1.02); } }
+@media (prefers-reduced-motion: reduce) { .film iframe, .film::after, .card { transition: none; } }

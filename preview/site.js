@@ -20,7 +20,7 @@ function stillHTML(p, shape) {
 export function tileHTML(p) {
   const shape = p.vertical ? 'tall' : p.large ? 'large' : 'wide';
   const body = `<span class="frame" style="--r:${ratio(p)}">${stillHTML(p, shape)}</span><h2>${esc(p.title)}</h2><p>${[p.client, p.year].filter(Boolean).map(esc).join(', ')}</p>`;
-  return `<li class="${shape}">${/^https:\/\//.test(p.href) ? `<a href="${esc(p.href)}" target="_blank" rel="noopener">${body}</a>` : body}</li>`;
+  return `<li class="${shape}">${/^https:\/\//.test(p.href) ? `<a class="card" href="${esc(p.href)}" target="_blank" rel="noopener">${body}</a>` : `<div class="card">${body}</div>`}</li>`;
 }
 
 export const pageFor = (hash, list) => (list.some(s => `#${s.id}` === hash) ? hash.slice(1) : 'landing');

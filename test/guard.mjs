@@ -9,7 +9,9 @@ const CSS = [
   [/z-index/i, 'z-index'],
   [/!\s*important/i, '!important'],
   [/(margin[\w-]*|top|inset[\w-]*)\s*:[^;}]*-\s*[\d.]/i, 'negative offset'],
-  [/translate\w*\([^)]*-\s*[\d.]/i, 'negative translate'],
+  // A lift of up to 16px is fine: the sealed container clips it.
+  [/translate\w*\((?!-(?:\d|1[0-6])px\))[^)]*-\s*[\d.]|translate(?!Y)\w*\([^)]*-\s*[\d.]/i, 'negative translate'],
+  [/:host[^{]*\{[^}]*(?<![-\w])(transform|translate|rotate|scale)\s*:/i, 'moves the container'],
   [/translate\s*:[^;}]*-\s*[\d.]/i, 'negative translate'],
   [/contain\s*:(?!\s*layout paint)/i, 'changes the seal'],
   [/:host-context|@import/i, 'reaches outside the container'],
