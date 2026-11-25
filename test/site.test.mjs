@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { violations } from './guard.mjs';
-import { tileHTML, pageHTML, pageFor, mount } from '../preview/site.js';
+import { tileHTML, pageHTML, pageFor, mount, trim } from '../preview/site.js';
 import { sections } from '../preview/projects.js';
 
 const at = p => fileURLToPath(new URL(p, import.meta.url));
@@ -134,4 +134,26 @@ test('hovering lifts one project and never changes the others', () => {
   assert.doesNotMatch(css, /grayscale|:has\(|\.lit/);
   for (const rule of css.match(/[^{}]+\{[^{}]*\}/g)) if (/:focus/.test(rule)) assert.doesNotMatch(rule, /transform|--lift/);
   assert.doesNotMatch(read('../preview/site.js'), /pointermove|lightUp/);
+});
+const squarespace = children => {
+  const cell = { style: {} }, engine = { style: {}, children: Array(children).fill(cell) };
+  return { cell, engine, closest: q => ({ '.fe-block': cell, '.fluid-engine': engine })[q] ?? null };
+};
+test('trim lets our block end where its content ends', () => {
+  const page = squarespace(1);
+  trim(page);
+  assert.deepEqual([page.engine.style, page.cell.style], [{ gridTemplateRows: 'auto' }, { gridRow: '1' }]);
+});
+test('trim leaves a section alone if anything else is in it, or if it is not Squarespace', () => {
+  const page = squarespace(2);
+  trim(page);
+  assert.deepEqual([page.engine.style, page.cell.style], [{}, {}]);
+  trim({ closest: () => null });
+});
+test('guard allows trimming our own block and nothing more', () => {
+  const ok = "const cell = host.closest('.fe-block');\nconst engine = host.closest('.fluid-engine');\nif (engine.children.length !== 1) return;\nengine.style.gridTemplateRows = 'auto';\ncell.style.gridRow = '1';";
+  assert.deepEqual(violations({ 'site.js': ok }), []);
+  for (const js of ["engine.style.position = 'fixed'", 'cell.remove()', 'engine.children[0].remove()', "cell.style.zIndex = '99'", "engine.style.gridTemplateRows = '1px'",
+                    "const cell = host.closest('#header');", "const engine = host.closest('body');", 'const x = engine', 'f(cell)'])
+    assert.ok(violations({ 'site.js': js }).length >= 1, js);
 });

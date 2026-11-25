@@ -76,6 +76,16 @@ export function fit(host) {
   new ResizeObserver(() => setTimeout(apply)).observe(section);
 }
 
+// Squarespace holds the code block at the height it was dragged to. Let it end where our content ends.
+// Only our own block, and only when nothing else shares its section.
+export function trim(host) {
+  const cell = host.closest('.fe-block');
+  const engine = host.closest('.fluid-engine');
+  if (!cell || !engine || engine.children.length !== 1) return;
+  engine.style.gridTemplateRows = 'auto';
+  cell.style.gridRow = '1';
+}
+
 async function loadSiteCSS() {
   const res = await fetch(new URL('./site.css', import.meta.url));
   if (!res.ok) throw new Error(`site.css ${res.status}`);
@@ -98,6 +108,7 @@ export async function mount(host, loadCSS = loadSiteCSS, list = sections) {
   root.addEventListener?.('click', e => { if (e.detail) root.activeElement?.blur(); });
   const draw = html => { root.innerHTML = `<style>${css}</style>${html}`; return playFilms(root); };
   let stop = draw(first), shown = current();
+  trim(host);
   fit(host);
   if (typeof location !== 'undefined') addEventListener('hashchange', () => {
     if (current() === shown) return;

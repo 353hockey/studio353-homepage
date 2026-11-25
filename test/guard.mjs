@@ -24,9 +24,14 @@ const JS = [
   [/cssText|offsetParent|showModal|requestFullscreen|showPopover|popover/, 'escapes the container'],
   [/import\s*\(|from\s*['"](?!\.\/)/, 'loads code from elsewhere'],
   [/<style>(?!\$\{css\})/, 'styles outside site.css'],
+  [/\b(cell|engine)\b/, 'changes the Squarespace block beyond trimming it'],
   [/section\s*\.\s*hidden|section\s*\.\s*(style|class|append|prepend|remove|inner|outer|set|insert|replace|query)/, 'changes the section'],
 ];
-const ALLOWED = [/const section = host\.closest\('section'\);/g, /typeof (document|location)\b/g, /document\.fonts\.add\(/g, /\blocation\.hash\b(?!\s*[-+*\/|&?%^<>]*=(?!=))/g, /document\.getElementById\('s353-portfolio'\)/g];
+const ALLOWED = [
+  // Trimming our own Squarespace block to its content: these exact statements only.
+  /const cell = host\.closest\('\.fe-block'\);/g, /const engine = host\.closest\('\.fluid-engine'\);/g,
+  /engine\.style\.gridTemplateRows = 'auto';/g, /cell\.style\.gridRow = '1';/g, /engine\.children\.length\b/g, /!cell \|\| !engine\b/g,
+  /const section = host\.closest\('section'\);/g, /typeof (document|location)\b/g, /document\.fonts\.add\(/g, /\blocation\.hash\b(?!\s*[-+*\/|&?%^<>]*=(?!=))/g, /document\.getElementById\('s353-portfolio'\)/g];
 
 export function violations(files) {
   const found = [];
