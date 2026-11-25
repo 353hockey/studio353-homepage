@@ -31,9 +31,10 @@ h1 { margin: 0; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.2; letter-sp
 .bar a:hover { text-decoration: underline; text-underline-offset: 4px; }
 .none { margin: 0; padding: 48px 0; font: italic clamp(24px, 3vw, 40px) var(--serif); }
 .grid { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); gap: 36px 16px; }
-.large { grid-column: span 3; }
-.wide { grid-column: span 2; }
-.tall { grid-column: span 1; }
+.large { grid-column-end: span 3; }
+.wide { grid-column-end: span 2; }
+.tall { grid-column-end: span 1; }
+.large + :not(.large), .wide + :not(.wide), .tall + :not(.tall) { grid-column-start: 1; }
 .frame { display: block; aspect-ratio: var(--r); }
 .frame:empty, .frame img { background: var(--blue); }
 .frame img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -51,11 +52,11 @@ h2 { margin: 10px 0 2px; font-size: 14px; line-height: 1.25; letter-spacing: .02
 }
 .grid a:hover h2 { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
-@media (max-width: 1000px) { .tall { grid-column: span 2; } }
+@media (max-width: 1000px) { .tall { grid-column-end: span 2; } }
 @media (max-width: 767px) {
   .split { grid-template-columns: 1fr; grid-auto-rows: 1fr; }
-  .large, .wide { grid-column: span 6; }
-  .tall { grid-column: span 3; }
+  .large, .wide { grid-column-end: span 6; }
+  .tall { grid-column-end: span 3; }
   .grid { gap: 28px 12px; }
 }
 @media (prefers-reduced-motion: no-preference) and (hover: hover) and (pointer: fine) { .card { --lift: translateY(-12px) scale(1.02); } .column:hover .film { transform: scale(1.04); } .column:hover .word { transform: scale(1.18); } }

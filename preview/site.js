@@ -15,6 +15,7 @@ const SIZES = {
 };
 function stillHTML(p, shape) {
   if (!p.still) return '';
+  if (p.still.startsWith('https://')) return `<img alt="" loading="lazy" decoding="async" src="${esc(p.still)}">`;
   const url = w => `https://i.vimeocdn.com/video/${esc(p.still)}-d_${w}`;
   return `<img alt="" loading="lazy" decoding="async" src="${url(640)}" srcset="${[320, 640, 960, 1280].map(w => `${url(w)} ${w}w`).join(', ')}" sizes="${SIZES[shape]}">`;
 }

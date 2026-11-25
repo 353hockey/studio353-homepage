@@ -1,6 +1,7 @@
 // The whole site's content. One section per column on the landing page; add a third to add Film.
 // film: the clip behind the word on the landing page (Vimeo number).
-// still: the project's image, from its Vimeo thumbnail address (i.vimeocdn.com/video/<still>-d_640).
+// still: the project's image. Either its Vimeo thumbnail (i.vimeocdn.com/video/<still>-d_640) or a full https address.
+// To add a project, see README.md.
 // vertical: true for 9:16 work. large: true for the two big images in the first row.
 const vertical = true, large = true;
 

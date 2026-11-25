@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { violations } from './guard.mjs';
 import { tileHTML, pageHTML, pageFor, mount, trim } from '../preview/site.js';
 import { sections } from '../preview/projects.js';
+import { fromVimeo, youtubeId } from '../lookup.mjs';
 
 const at = p => fileURLToPath(new URL(p, import.meta.url));
 const read = p => readFileSync(at(p), 'utf8');
@@ -101,17 +102,38 @@ test('work pages are images only, loaded as needed at the right size', () => {
   const html = pageHTML(sections, 'sports');
   assert.doesNotMatch(html, /data-vimeo|<iframe/);
   const imgs = html.match(/<img\b[^>]*>/g);
-  assert.equal(imgs.length, 11);
-  for (const img of imgs) for (const part of ['loading="lazy"', 'decoding="async"', 'alt=""', 'srcset="', 'sizes="', 'https://i.vimeocdn.com/video/'])
+  assert.equal(imgs.length, sections.find(s => s.id === 'sports').projects.length);
+  for (const img of imgs) for (const part of ['loading="lazy"', 'decoding="async"', 'alt=""', 'src="https://'])
     assert.ok(img.includes(part), part);
 });
 test('a project without an image shows a blue frame, not a broken image', () =>
   assert.doesNotMatch(tileHTML(project({ still: '' })), /<img/));
-test('sports has the 11 current projects, each with an image and a link', () => {
-  const sports = sections.find(s => s.id === 'sports').projects;
-  assert.equal(sports.length, 11);
-  for (const p of sports) { assert.match(p.still, /^\d+-[0-9a-f]{64}$/); assert.match(p.href, /^https:\/\//); }
-  assert.equal(new Set(sports.map(p => p.still)).size, 11);
+test('every project is complete, so one can be added by editing the list alone', () => {
+  for (const { id, projects } of sections) {
+    for (const p of projects) {
+      assert.ok(p.title && Number.isInteger(p.year), `${id}: ${p.title}`);
+      assert.match(p.still, /^(\d+-[0-9a-f]{64}|https:\/\/\S+)$/, p.title);
+      assert.match(p.href, /^https:\/\//, p.title);
+    }
+    for (const key of ['still', 'href']) assert.equal(new Set(projects.map(p => p[key])).size, projects.length, `${id}: two projects share a ${key}`);
+  }
+  assert.ok(sections.find(s => s.id === 'sports').projects.length >= 11);
+});
+test('an image can also be a full address, such as YouTube or our own images folder', () => {
+  const html = tileHTML(project({ still: 'https://i.ytimg.com/vi/a/maxresdefault.jpg' }));
+  assert.match(html, /<img [^>]*src="https:\/\/i\.ytimg\.com\/vi\/a\/maxresdefault\.jpg">/);
+  assert.doesNotMatch(html, /srcset|vimeocdn/);
+  assert.match(tileHTML(project({})), /src="https:\/\/i\.vimeocdn\.com\/video\/[^>]* srcset="[^>]* sizes="/);
+});
+test('shapes never share a row, however many of each there are', () =>
+  assert.match(read('../preview/site.css'), /\.large \+ :not\(\.large\), \.wide \+ :not\(\.wide\), \.tall \+ :not\(\.tall\) \{ grid-column-start: 1; \}/));
+test('lookup turns a video link into what the list needs', () => {
+  const vimeo = { title: 'V', width: 240, height: 426, upload_date: '2026-05-29 10:50:05', thumbnail_url: `https://i.vimeocdn.com/video/12-${'a'.repeat(64)}-d_200x150?region=us` };
+  assert.deepEqual(fromVimeo(vimeo), { title: 'V', year: 2026, still: `12-${'a'.repeat(64)}`, vertical: true });
+  assert.equal(fromVimeo({ ...vimeo, width: 426, height: 240 }).vertical, undefined);
+  for (const u of ['https://youtu.be/sKd_z9JtFqY', 'https://www.youtube.com/watch?v=sKd_z9JtFqY&t=3', 'https://www.youtube.com/shorts/sKd_z9JtFqY'])
+    assert.equal(youtubeId(u), 'sKd_z9JtFqY', u);
+  assert.equal(youtubeId('https://www.instagram.com/reel/C8MX-_9uyzg/'), undefined);
 });
 for (const [why, css, list] of [['the stylesheet fails', async () => { throw new Error('offline'); }, undefined],
                                 ['building the page fails', async () => '', [{ id: 'x' }, null]]])
