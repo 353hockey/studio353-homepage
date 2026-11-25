@@ -75,7 +75,7 @@ test('the hover effect is for real pointers only', () => {
   const outside = css.replace(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\n\}/, '')
     .replace(/@media \(prefers-reduced-motion: no-preference\) and \(hover: hover\) and \(pointer: fine\).*/, '');
   assert.notEqual(outside, css);
-  assert.doesNotMatch(outside, /grayscale|translateY/);
+  assert.doesNotMatch(outside, /translateY|li:hover/);
 });
 test('landing has one column per section, so a third can be added', () => {
   const three = ['Sports', 'Music', 'Film'].map(name => ({ id: name.toLowerCase(), name, film: null, projects: [] }));
@@ -129,8 +129,9 @@ test('snippets are identical apart from the copy, and carry no page-wide code', 
 });
 test('a film is never revealed on a timer, only when it plays', () =>
   assert.doesNotMatch(read('../preview/site.js'), /setTimeout\(on/));
-test('only the pointer can grey out the grid, never leftover focus after a click', () => {
+test('hovering lifts one project and never changes the others', () => {
   const css = read('../preview/site.css');
-  assert.doesNotMatch(css, /:has\(/);
-  for (const rule of css.match(/[^{}]+\{[^{}]*\}/g)) if (/:focus/.test(rule)) assert.doesNotMatch(rule, /grayscale|opacity|transform|--lift/);
+  assert.doesNotMatch(css, /grayscale|:has\(|\.lit/);
+  for (const rule of css.match(/[^{}]+\{[^{}]*\}/g)) if (/:focus/.test(rule)) assert.doesNotMatch(rule, /transform|--lift/);
+  assert.doesNotMatch(read('../preview/site.js'), /pointermove|lightUp/);
 });

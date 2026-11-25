@@ -34,13 +34,11 @@ h1 { margin: 0; font-size: clamp(22px, 2.2vw, 34px); line-height: 1.2; letter-sp
 h2 { margin: 10px 0 2px; font-size: 14px; line-height: 1.25; letter-spacing: .02em; text-transform: uppercase; }
 .tall h2 { font-size: 13px; }
 .grid p { margin: 0; font: italic 17px/1.25 var(--serif); }
-/* Hover, desktop only: the piece under the pointer lifts, the rest go grey. site.js sets .lit and .up.
-   The list item stays put, so the pointer never falls off it. */
+/* Hover, desktop only: the piece lifts. The list item stays put, so the pointer never falls off it. */
 .card { display: block; --lift: none; }
 @media (hover: hover) and (pointer: fine) {
-  .card { transition: transform .4s cubic-bezier(.2, .8, .2, 1), filter .3s ease .06s, opacity .3s ease .06s; }
-  .grid.lit .card { filter: grayscale(1); opacity: .28; transition-delay: 0s; }
-  .grid.lit .up .card { filter: none; opacity: 1; transform: var(--lift); }
+  .card { transition: transform .4s cubic-bezier(.2, .8, .2, 1); }
+  .grid li:hover .card { transform: var(--lift); }
 }
 .grid a:hover h2 { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
 
