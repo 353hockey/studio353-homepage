@@ -46,7 +46,7 @@ test('guard rejects a stylesheet that is not sealed', () =>
   assert.equal(violations({ 'site.css': 'p{color:red}' }).filter(v => v.includes('sealed')).length, 1));
 test('mount seals the container with priority over page styles', async () => {
   const set = [];
-  const host = { attachShadow: () => ({ querySelectorAll: () => [] }), closest: () => null, style: { setProperty: (...a) => set.push(a) } };
+  const host = { attachShadow: () => ({ lastElementChild: { querySelectorAll: () => [] } }), closest: () => null, style: { setProperty: (...a) => set.push(a) } };
   assert.equal(await mount(host, async () => '', []), true);
   assert.deepEqual(set[0], ['contain', 'layout paint', 'important']);
 });
@@ -75,7 +75,7 @@ test('the hover effect is for real pointers only', () => {
   const outside = css.replace(/@media \(hover: hover\) and \(pointer: fine\) \{[\s\S]*?\n\}/, '')
     .replace(/@media \(prefers-reduced-motion: no-preference\) and \(hover: hover\) and \(pointer: fine\).*/, '');
   assert.notEqual(outside, css);
-  assert.doesNotMatch(outside, /translateY|li:hover/);
+  assert.doesNotMatch(outside, /translateY|li:hover|column:hover/);
 });
 test('landing has one column per section, so a third can be added', () => {
   const three = ['Sports', 'Music', 'Film'].map(name => ({ id: name.toLowerCase(), name, film: null, projects: [] }));
@@ -156,4 +156,20 @@ test('guard allows trimming our own block and nothing more', () => {
   for (const js of ["engine.style.position = 'fixed'", 'cell.remove()', 'engine.children[0].remove()', "cell.style.zIndex = '99'", "engine.style.gridTemplateRows = '1px'",
                     "const cell = host.closest('#header');", "const engine = host.closest('body');", 'const x = engine', 'f(cell)'])
     assert.ok(violations({ 'site.js': js }).length >= 1, js);
+});
+test('screens cross-fade over half a second, in the script and the stylesheet alike', () => {
+  assert.match(read('../preview/site.js'), /const FADE = 500;/);
+  const css = read('../preview/site.css');
+  assert.match(css, /\.arriving \{ animation: arrive \.5s/);
+  assert.match(css, /\.leaving \{[^}]*animation: leave \.5s/);
+  assert.match(css, /prefers-reduced-motion: reduce\)[^@]*\.arriving, \.leaving \{ animation: none; \}/);
+});
+test('each side of the landing page responds to hover, film or not', () => {
+  const css = read('../preview/site.css');
+  assert.match(css, /\.column:hover \.word \{ transform:/);
+  assert.match(css, /\.column:hover \.film \{ transform: scale\(/);
+});
+test('returning to the landing page never focuses a side, which would look like a stuck hover', () => {
+  assert.doesNotMatch(read('../preview/site.js'), /querySelector\('h1, a'\)/);
+  assert.match(read('../preview/site.js'), /querySelector\('h1'\)\?\.focus/);
 });

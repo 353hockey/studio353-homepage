@@ -5,6 +5,8 @@ const esc = s => String(s).replace(/[&<>"']/g, c =>
 const ratio = p => (p.vertical ? 9 / 16 : 16 / 9);
 const filmHTML = p => `<span class="film" style="--r:${ratio(p)}"${p.vimeo ? ` data-vimeo="${esc(p.vimeo)}"` : ''}></span>`;
 
+const FADE = 500; // Milliseconds. Matches .arriving and .leaving in site.css.
+
 // Image widths on screen, matching the grid in site.css.
 const SIZES = {
   large: '(max-width: 767px) 92vw, 46vw',
@@ -38,8 +40,8 @@ export function pageHTML(list, id) {
 
 // Landing films load near the screen and unload when they leave. Blue shows until one is really playing.
 const VIMEO = 'https://player.vimeo.com';
-function playFilms(root) {
-  const films = root.querySelectorAll('.film[data-vimeo]');
+function playFilms(view) {
+  const films = view.querySelectorAll('.film[data-vimeo]');
   if (!films.length) return () => {};
   const observer = new IntersectionObserver(entries => entries.forEach(({ target: film, isIntersecting }) => {
     if (!isIntersecting) { film.innerHTML = ''; return; }
@@ -55,7 +57,7 @@ function playFilms(root) {
   films.forEach(f => observer.observe(f));
   const onMessage = e => {
     if (e.origin !== VIMEO || !String(e.data).includes('layProgress')) return;
-    for (const frame of root.querySelectorAll('iframe')) if (frame.contentWindow === e.source) frame.reveal();
+    for (const frame of view.querySelectorAll('iframe')) if (frame.contentWindow === e.source) frame.reveal();
   };
   addEventListener('message', onMessage);
   return () => { observer.disconnect(); removeEventListener('message', onMessage); };
@@ -104,19 +106,27 @@ export async function mount(host, loadCSS = loadSiteCSS, list = sections) {
   // Nothing inside can paint outside the container, even if page styles disagree.
   host.style.setProperty('contain', 'layout paint', 'important');
   const root = host.attachShadow({ mode: 'open' });
+  root.innerHTML = `<style>${css}</style><div class="view">${first}</div>`;
+  let view = root.lastElementChild, stop = playFilms(view), shown = current(), finish = () => {};
   // A mouse click should not leave a keyboard outline behind. Enter (detail 0) keeps it.
   root.addEventListener?.('click', e => { if (e.detail) root.activeElement?.blur(); });
-  const draw = html => { root.innerHTML = `<style>${css}</style>${html}`; return playFilms(root); };
-  let stop = draw(first), shown = current();
   trim(host);
   fit(host);
   if (typeof location !== 'undefined') addEventListener('hashchange', () => {
     if (current() === shown) return;
-    stop();
+    finish();
+    const old = view, stopOld = stop;
     shown = current();
-    stop = draw(pageHTML(list, shown));
+    old.insertAdjacentHTML('afterend', `<div class="view arriving">${pageHTML(list, shown)}</div>`);
+    view = old.nextElementSibling;
+    stop = playFilms(view);
+    old.className = 'view leaving';
+    old.inert = true;
+    const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    finish = () => { clearTimeout(timer); stopOld(); old.remove(); view.classList.remove('arriving'); finish = () => {}; };
+    const timer = setTimeout(() => finish(), still ? 0 : FADE);
     scrollTo(0, 0);
-    root.querySelector('h1, a')?.focus({ preventScroll: true });
+    view.querySelector('h1')?.focus({ preventScroll: true });
   });
   return true;
 }
